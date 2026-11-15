@@ -1,1 +1,41 @@
-daily_post.yml
+name: Kunlik Qurilish Posti
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+    - cron: "0 13 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  post-to-telegram:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repozitoriyni yuklash
+        uses: actions/checkout@v4
+
+      - name: Python o'rnatish
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Kutubxonalarni o'rnatish
+        run: pip install google-genai requests
+
+      - name: Post yaratish va Telegramga yuborish
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+        run: python bot.py
+
+      - name: Mavzular tarixini saqlash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add history.txt
+          git diff --staged --quiet || git commit -m "chore: yangi mavzu tarixga qo'shildi"
+          git push
